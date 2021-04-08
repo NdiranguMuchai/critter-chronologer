@@ -10,8 +10,12 @@ import java.util.Set;
 @Entity
 @Table(name = "employee")
 public class Employee extends DetailsHandler {
+    /**
+     * has similar use as many to one rship but the skill & daysAvailable elements are not saved as entities
+     */
     @ElementCollection
     private Set<EmployeeSkill> skills = new HashSet<>();
+
     @ElementCollection
     private Set<DayOfWeek> daysAvailable = new HashSet<>();
 
