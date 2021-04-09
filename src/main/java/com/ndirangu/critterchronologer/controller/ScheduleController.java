@@ -9,6 +9,10 @@ import com.ndirangu.critterchronologer.service.CustomerService;
 import com.ndirangu.critterchronologer.service.EmployeeService;
 import com.ndirangu.critterchronologer.service.PetService;
 import com.ndirangu.critterchronologer.service.ScheduleService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +22,13 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/schedule")
+@Api(tags = {"Schedule"})
+@ApiResponses(value = {
+        @ApiResponse(code = 200, message = "Success"),
+        @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+        @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+})
 public class ScheduleController {
     private final ScheduleService scheduleService;
     private final CustomerService customerService;
@@ -36,6 +47,7 @@ public class ScheduleController {
     }
 
     @PostMapping
+    @ApiOperation(value = "Creates a schedule object")
     public ScheduleDTO createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
         Schedule schedule = convertDTOToSchedule(scheduleDTO);
         return convertScheduleToDTO(scheduleService.create(schedule));
@@ -43,6 +55,7 @@ public class ScheduleController {
     }
 
     @GetMapping
+    @ApiOperation(value = "Returns a list of all schedules")
     public List<ScheduleDTO> getAllSchedules() {
 
         return scheduleService.list()
@@ -52,6 +65,7 @@ public class ScheduleController {
     }
 
     @GetMapping("/pet/{petId}")
+    @ApiOperation(value = "Returns a list of all schedules for a pet given the pet id")
     public List<ScheduleDTO> getScheduleForPet(@PathVariable long petId) throws Exception{
         Pet pet = petService.findById(petId);
 
@@ -62,6 +76,7 @@ public class ScheduleController {
     }
 
     @GetMapping("/employee/{employeeId}")
+    @ApiOperation(value = "Returns a list of all schedules for an employee given the employee id")
     public List<ScheduleDTO> getScheduleForEmployee(@PathVariable long employeeId) throws Exception{
         Employee employee = employeeService.findById(employeeId);
 
@@ -72,6 +87,7 @@ public class ScheduleController {
     }
 
     @GetMapping("/customer/{customerId}")
+    @ApiOperation(value = "Returns a list of all schedules for a customer given the customer id")
     public List<ScheduleDTO> getScheduleForCustomer(@PathVariable long customerId) {
         Customer customer = customerService.findById(customerId);
 
