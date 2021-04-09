@@ -16,7 +16,7 @@ The following  should be installed in your system:
 
 ## Database configuration
 * A commented SQL command is included in the `application.properties` file to create the critter database
-* Spring & Hibernate will create everything else for you
+* Spring & `Hibernate` will create everything else for you
 
 ## Running Critter locally
 Critter Chronologer is a [Spring Boot](https://spring.io/guides/gs/spring-boot) application built using [Maven](https://spring.io/guides/gs/maven/). You can build a jar file and run it from the command line:
