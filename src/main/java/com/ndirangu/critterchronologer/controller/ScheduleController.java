@@ -1,5 +1,6 @@
 package com.ndirangu.critterchronologer.controller;
 
+import com.ndirangu.critterchronologer.converter.ScheduleDTOConverter;
 import com.ndirangu.critterchronologer.dto.ScheduleDTO;
 import com.ndirangu.critterchronologer.model.Customer;
 import com.ndirangu.critterchronologer.model.Employee;
@@ -13,10 +14,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,23 +33,26 @@ public class ScheduleController {
     private final CustomerService customerService;
     private final EmployeeService employeeService;
     private final PetService petService;
+    private final ScheduleDTOConverter scheduleDTOConverter;
 
     public ScheduleController(ScheduleService scheduleService,
                               CustomerService customerService,
                               EmployeeService employeeService,
-                              PetService petService) {
+                              PetService petService,
+                              ScheduleDTOConverter scheduleDTOConverter) {
 
         this.scheduleService = scheduleService;
         this.customerService = customerService;
         this.employeeService = employeeService;
         this.petService = petService;
+        this.scheduleDTOConverter = scheduleDTOConverter;
     }
 
     @PostMapping
     @ApiOperation(value = "Creates a schedule object")
     public ScheduleDTO createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
-        Schedule schedule = convertDTOToSchedule(scheduleDTO);
-        return convertScheduleToDTO(scheduleService.create(schedule));
+        Schedule schedule = scheduleDTOConverter.convertDTOToSchedule(scheduleDTO);
+        return scheduleDTOConverter.convertScheduleToDTO(scheduleService.create(schedule));
 
     }
 
@@ -60,7 +62,7 @@ public class ScheduleController {
 
         return scheduleService.list()
                 .stream()
-                .map(this::convertScheduleToDTO)
+                .map(scheduleDTOConverter::convertScheduleToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -71,7 +73,7 @@ public class ScheduleController {
 
         return scheduleService.findScheduleByPet(pet)
                 .stream()
-                .map(this::convertScheduleToDTO)
+                .map(scheduleDTOConverter::convertScheduleToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -82,7 +84,7 @@ public class ScheduleController {
 
         return scheduleService.findScheduleByEmployee(employee)
                 .stream()
-                .map(this::convertScheduleToDTO)
+                .map(scheduleDTOConverter::convertScheduleToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -93,66 +95,8 @@ public class ScheduleController {
 
         return scheduleService.findScheduleByCustomer(customer)
                 .stream()
-                .map(this::convertScheduleToDTO)
+                .map(scheduleDTOConverter::convertScheduleToDTO)
                 .collect(Collectors.toList());
     }
 
-
-
-    private ScheduleDTO convertScheduleToDTO(Schedule schedule){
-        ScheduleDTO scheduleDTO = new ScheduleDTO();
-        BeanUtils.copyProperties(schedule, scheduleDTO);
-
-        List<Long> employeeIds = new ArrayList<>();
-        List<Long> petIds = new ArrayList<>();
-
-        if (schedule.getEmployees() != null){
-            schedule.getEmployees().forEach(employee -> employeeIds.add(employee.getId()));
-        }
-
-        if (schedule.getPets() != null){
-            schedule.getPets().forEach(pet -> petIds.add(pet.getId()));
-        }
-
-        scheduleDTO.setEmployeeIds(employeeIds);
-        scheduleDTO.setPetIds(petIds);
-
-        return scheduleDTO;
-    }
-
-    private Schedule convertDTOToSchedule(ScheduleDTO scheduleDTO){
-        Schedule schedule = new Schedule();
-        BeanUtils.copyProperties(scheduleDTO, schedule);
-
-        List<Long> employeeIds = scheduleDTO.getEmployeeIds();
-        List<Long> petIds = scheduleDTO.getPetIds();
-
-        List<Employee> employees = new ArrayList<>();
-        List<Pet> pets = new ArrayList<>();
-
-        if (employeeIds != null){
-            employeeIds.forEach(employeeId -> {
-                try {
-                    employees.add(employeeService.findById(employeeId));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-
-        if (petIds != null){
-            petIds.forEach(petId -> {
-                try {
-                    pets.add(petService.findById(petId));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-
-        schedule.setEmployees(employees);
-        schedule.setPets(pets);
-
-        return schedule;
-    }
 }

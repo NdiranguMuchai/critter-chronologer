@@ -1,5 +1,7 @@
 package com.ndirangu.critterchronologer.controller;
 
+import com.ndirangu.critterchronologer.converter.CustomerDTOConverter;
+import com.ndirangu.critterchronologer.converter.EmployeeDTOConverter;
 import com.ndirangu.critterchronologer.dto.CustomerDTO;
 import com.ndirangu.critterchronologer.dto.EmployeeDTO;
 import com.ndirangu.critterchronologer.dto.EmployeeRequestDTO;
@@ -14,12 +16,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,21 +43,27 @@ public class UserController {
     private final CustomerService customerService;
     private final EmployeeService employeeService;
     private final PetService petService;
+    private final CustomerDTOConverter customerDTOConverter;
+    private final EmployeeDTOConverter employeeDTOConverter;
 
     public UserController(CustomerService customerService,
                           EmployeeService employeeService,
-                          PetService petService) {
+                          PetService petService,
+                          CustomerDTOConverter customerDTOConverter,
+                          EmployeeDTOConverter employeeDTOConverter) {
 
         this.customerService = customerService;
         this.employeeService = employeeService;
         this.petService = petService;
+        this.customerDTOConverter = customerDTOConverter;
+        this.employeeDTOConverter = employeeDTOConverter;
     }
 
     @PostMapping("/customer")
     @ApiOperation(value = "Creates a customer object")
     public CustomerDTO saveCustomer(@RequestBody CustomerDTO customerDTO){
-        Customer customer = convertDTOToCustomer(customerDTO);
-        return convertCustomerToDTO(customerService.save(customer));
+        Customer customer = customerDTOConverter.convertDTOToCustomer(customerDTO);
+        return customerDTOConverter.convertCustomerToDTO(customerService.save(customer));
     }
 
     @GetMapping("/customer")
@@ -65,7 +71,7 @@ public class UserController {
     public List<CustomerDTO> getAllCustomers(){
         return customerService.list()
                 .stream()
-                .map(this::convertCustomerToDTO)
+                .map(customerDTOConverter::convertCustomerToDTO)
                 .collect(Collectors.toList());
 
     }
@@ -77,22 +83,22 @@ public class UserController {
 
         Customer owner = customerService.findOwnerByPet(pet);
 
-        return convertCustomerToDTO(owner);
+        return customerDTOConverter.convertCustomerToDTO(owner);
     }
 
 
     @PostMapping("/employee")
     @ApiOperation(value = "Creates an employee object")
     public EmployeeDTO saveEmployee(@RequestBody EmployeeDTO employeeDTO) {
-        Employee employee = convertDTOToEmployee(employeeDTO);
-        return convertEmployeeToDTO(employeeService.save(employee));
+        Employee employee = employeeDTOConverter.convertDTOToEmployee(employeeDTO);
+        return employeeDTOConverter.convertEmployeeToDTO(employeeService.save(employee));
 
     }
 
     @GetMapping("/employee/{employeeId}")
     @ApiOperation(value = "Finds an employee given the employee id")
     public EmployeeDTO getEmployee(@PathVariable long employeeId) throws Exception{
-        return convertEmployeeToDTO(employeeService.findById(employeeId));
+        return employeeDTOConverter.convertEmployeeToDTO(employeeService.findById(employeeId));
     }
 
     @PutMapping("/employee/{employeeId}")
@@ -111,50 +117,8 @@ public class UserController {
 
         return employeeService.findEmployeesForService(localDate, skills)
                 .stream()
-                .map(this::convertEmployeeToDTO)
+                .map(employeeDTOConverter::convertEmployeeToDTO)
                 .collect(Collectors.toList());
     }
 
-    private CustomerDTO convertCustomerToDTO(Customer customer){
-        CustomerDTO customerDTO = new CustomerDTO();
-        BeanUtils.copyProperties(customer, customerDTO);
-
-        List<Long> petIds = new ArrayList<>();
-
-        if (customer.getPets() != null){
-            customer.getPets().forEach(pet -> petIds.add(pet.getId()));
-        }
-
-        customerDTO.setPetIds(petIds);
-
-        return customerDTO;
-    }
-
-    private Customer convertDTOToCustomer(CustomerDTO customerDTO){
-        Customer customer = new Customer();
-        BeanUtils.copyProperties(customerDTO, customer);
-
-        List<Long> petIds = customerDTO.getPetIds();
-
-        if (petIds != null){
-            List<Pet> pets = petService.list();
-            customer.setPets(pets);
-        }
-
-        return customer;
-    }
-
-    private EmployeeDTO convertEmployeeToDTO(Employee employee){
-        EmployeeDTO employeeDTO = new EmployeeDTO();
-        BeanUtils.copyProperties(employee, employeeDTO);
-
-        return employeeDTO;
-    }
-
-    private Employee convertDTOToEmployee(EmployeeDTO employeeDTO){
-        Employee employee = new Employee();
-        BeanUtils.copyProperties(employeeDTO, employee);
-
-        return employee;
-    }
 }
